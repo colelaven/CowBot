@@ -10,9 +10,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 token = environ["TOKEN"]
-guildID = 367758891179704339
-channelID = 1023715625115320380
-roleID = 1023740823625543720
+guildID = 491680664769265664
+channelID = 851942788936630292
+roleID = 976537125984038924
 
 bot = interactions.Client(token=token)
 
@@ -41,10 +41,13 @@ async def on_ready():
     # Users cannot queue while they are already queue'd
     # QM cannot queue until their reign has ended
     global qotdQueue
-    if os.path.exists('queue.pkl'):
+    global qmStartTime
+    qmStartTime = 0
+    qotdQueue = []
+    if os.path.exists('state.pkl'):
         try:
-            qotdQueue = await loadState()
-            log(f"Loaded queue: {qotdQueue}")
+            qotdQueue, qmStartTime = await loadState()
+            log(f"Loaded state:\nQueue: {qotdQueue}\nqmStartTime: {qmStartTime}")
             await removeALlQMRoles()
             if qotdQueue:
                 await giveQM(qotdQueue[0])
@@ -79,11 +82,12 @@ async def queue(ctx: interactions.CommandContext):
     if not qotdQueue:
         await giveQM(member)
         qotdQueue.append(member)
+        global qmStartTime
+        qmStartTime = datetime.now()
         await ctx.send(f"Congrats {member.mention}, you are now the Question Master!")
     else:
         qotdQueue.append(member)
-        await ctx.send(f"You have joined the queue at position **{len(qotdQueue) - 1}**.")
-        #TODO: send the time that their question master reign will start
+        await ctx.send(f"You have joined the queue at position **{len(qotdQueue) - 1}**.\nI will ping you when your day comes.")
     
     saveState()
 
@@ -171,10 +175,13 @@ async def cycleHelper(receiver):
     if qotdQueue:
         oldQM = qotdQueue.pop(0)
         await removeQM(oldQM)
+        global qmStartTime
+        qmStartTime = 0
         
         if qotdQueue:
             newQM = qotdQueue[0]
             await giveQM(newQM)
+            qmStartTime = datetime.now()
             await receiver.send(f"Question Master has been cycled: **{oldQM.name}** has been dethroned.\nCongrats {newQM.mention}, you are now the Question Master!")
         else:
             await receiver.send(f"Question Master has been cycled: **{oldQM.name}** has been dethroned.\nThere is no new Question Master.")
@@ -188,9 +195,11 @@ async def cycleHelper(receiver):
 @aiocron.crontab('0 0 * * *')
 async def autoCycle():
     log("AutoTriggering Cycle")
+    if qotdQueue and qmStartTime and ((datetime.now() - qmStartTime).hours < 4):
+        log("AutoTriggered Cycle: QM is too recent: No effect.")
     status = await cycleHelper(channel)
     if status == -1:
-        log("AutoTriggered Cycle: No effect.")
+        log("AutoTriggered Cycle: No state: No effect.")
     else:
         log(f"AutoTriggered Cycle: case({status}).")
 
@@ -210,7 +219,10 @@ async def clear(ctx: interactions.CommandContext):
 
 async def clearHelper():
     await removeALlQMRoles()
+    global qotdQueue
+    global qmStartTime
     qotdQueue = []
+    qmStartTime = 0
     saveState()
 
 
@@ -246,15 +258,31 @@ async def removeQM(member: interactions.api.models.Member):
 
 def saveState():
     idList = [int(user.id) for user in qotdQueue]
-    log('saving state, ids: ' + str(idList))
-    with open('queue.pkl', 'wb') as f:
-        pickle.dump(idList, f)
+    state = {
+        'idList' : idList,
+        'qmStartTime' : qmStartTime
+    }
+    log('saving state, state: ' + str(state))
+    with open('state.pkl', 'wb') as f:
+        pickle.dump(state, f)
 
 async def loadState():
-    with open('queue.pkl', 'rb') as f:
-        idList = pickle.load(f)
-        log('Loaded state, ids: ' + str(idList))
-        return [await idToMember(id) for id in idList]
+    with open('state.pkl', 'rb') as f:
+        try:
+            state = pickle.load(f)
+        except Exception as e:
+            log('loadState exception caught: ' + repr(e))
+            state = {
+                'idList' : [],
+                'qmStartTime' : 0
+            }
+        if state['qmStartTime']:
+            loadedStartTime = state['qmStartTime']
+        else:
+            loadedStartTime = 0
+        log('Loaded state, state: ' + str(state))
+        return [await idToMember(id) for id in state['idList']], loadedStartTime
+
 
 async def idToMember(id):
     return await interactions.get(
