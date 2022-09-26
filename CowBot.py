@@ -1,7 +1,7 @@
-import discord
 import interactions
-import datetime
+import aiocron
 
+from datetime import datetime
 from os import environ
 from dotenv import load_dotenv
 
@@ -9,15 +9,19 @@ load_dotenv()
 
 token = environ["TOKEN"]
 guildID = 367758891179704339
+channelID = 1023715625115320380
+roleID = 1023740823625543720
 
 bot = interactions.Client(token=token)
 
-# Index 0 will represent person currently with QM
-# rest of queue will be people waiting for QM
-# Members cannot queue while they are already queue'd
-# QMs cannot queue until their reign has ended
+
+# Index 0 represents current QM
+# Index 1+ are users queued for QM
+# Users cannot queue while they are already queue'd
+# QM cannot queue until their reign has ended
+# TODO: load from DB or file on init
+# TODO: store to DB or file on change
 qotdQueue = []
-qmRole = ''
 
 @bot.event
 async def on_ready():
@@ -27,10 +31,16 @@ async def on_ready():
     qmRole = await interactions.get(
         bot,
         interactions.Role,
-        object_id=1023740823625543720,
+        object_id=roleID,
         parent_id=guildID
     )
 
+    global channel
+    channel = await interactions.get(
+        bot,
+        interactions.Channel,
+        object_id=channelID
+    )
 
 ###################################
 #              QUEUE              #
@@ -88,14 +98,18 @@ async def status(ctx: interactions.CommandContext):
 ###################################
 #             CYCLE               #
 ###################################
-# TODO: Trigger every midnight
 @bot.command(
     name='cycle',
-    description="Manually cycle in the next Question Master",
+    description="Manually cycle the Question Master",
     default_member_permissions=interactions.Permissions.ADMINISTRATOR
 )
 async def cycleQM(ctx: interactions.CommandContext):
     log(f"Cycle({ctx.author})")
+    status = await cycleHelper(ctx)
+    if status == -1:
+        await ctx.send("Congrats, you did nothing! There was no Question Master to begin with, dummy.")
+
+async def cycleHelper(receiver):
     if qotdQueue:
         oldQM = qotdQueue.pop(0)
         await oldQM.remove_role(qmRole, guildID)
@@ -103,14 +117,21 @@ async def cycleQM(ctx: interactions.CommandContext):
         if qotdQueue:
             newQM = qotdQueue[0]
             await giveQM(newQM)
-            await ctx.send(f"Successfully cycled QM: **{oldQM.name}** has been dethroned. Congrats {newQM.mention}, you are now the Question Master!")
-            return
+            await receiver.send(f"Question Master has been cycled: **{oldQM.name}** has been dethroned.\nCongrats {newQM.mention}, you are now the Question Master!")
+            return 1
         else:
-            await ctx.send(f"Successfully cycled QM: **{oldQM.name}** has been dethroned, there is no new Question Master.")
-            return
-    
-    await ctx.send("Cycle has no effect as there is no current Question Master.")
+            await receiver.send(f"Question Master has been cycled: **{oldQM.name}** has been dethroned.\nThere is no new Question Master.")
+            return 0
+    return -1
 
+# Trigger Cycle every day at Midnight
+@aiocron.crontab('0 0 * * *')
+async def triggerCycle():
+    log("Cycle Triggered")
+    status = await cycleHelper(channel)
+    if status == -1:
+        log("AutoTriggered Cycle: No effect.")
+    log(f"AutoTriggered Cycle: case({status}).")
 
 
 ###################################
@@ -119,7 +140,7 @@ async def cycleQM(ctx: interactions.CommandContext):
 
 
 # Give QM role to Member
-async def giveQM(member: discord.Member):
+async def giveQM(member: interactions.api.models.Member):
     try:
         await member.add_role(qmRole, guildID)
     except interactions.api.error.LibraryException as e:
@@ -127,7 +148,7 @@ async def giveQM(member: discord.Member):
 
 
 def log(msg):
-    print(f"{datetime.datetime.now()} | {msg}")
+    print(f"{datetime.now()} | {msg}")
     
 
 bot.start()
