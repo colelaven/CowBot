@@ -47,7 +47,7 @@ async def on_ready():
     if os.path.exists('state.pkl'):
         try:
             qotdQueue, qmStartTime = await loadState()
-            log(f"Loaded state:\nQueue: {qotdQueue}\nqmStartTime: {qmStartTime}")
+            log(f"Loaded state: Queue: {qotdQueue} | qmStartTime: {qmStartTime}")
             await removeALlQMRoles()
             if qotdQueue:
                 await giveQM(qotdQueue[0])
@@ -293,7 +293,7 @@ async def idToMember(id):
     )
 
 def log(msg):
-    print(f"{datetime.now()} | {msg}")
+    print(f"{datetime.now()} | {msg}", flush=True)
     
 
 bot.start()
