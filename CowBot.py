@@ -47,12 +47,11 @@ async def on_ready():
     if os.path.exists('state.pkl'):
         try:
             qotdQueue, qmStartTime = await loadState()
+            log(f"Restart Detected")
             log(f"Loaded state: Queue: {qotdQueue} | qmStartTime: {qmStartTime}")
             await removeALlQMRoles()
             if qotdQueue:
                 await giveQM(qotdQueue[0])
-                await channel.send(f"I have been restarted and recovered data.")
-                await statusHelper(channel)
         except Exception as e:
             log("Error loading state: " + repr(e))
             await clearHelper()
@@ -195,8 +194,11 @@ async def cycleHelper(receiver):
 @aiocron.crontab('0 0 * * *')
 async def autoCycle():
     log("AutoTriggering Cycle")
-    if qotdQueue and qmStartTime and ((datetime.now() - qmStartTime).hours < 4):
-        log("AutoTriggered Cycle: QM is too recent: No effect.")
+    if qotdQueue and qmStartTime:
+        timedif = datetime.now() - qmStartTime
+        if timedif.days == 0 and timedif.seconds < 4*3600:
+            log("AutoTriggered Cycle: QM is too recent: No effect.")
+            return  
     status = await cycleHelper(channel)
     if status == -1:
         log("AutoTriggered Cycle: No state: No effect.")
