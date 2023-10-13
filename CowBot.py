@@ -3,6 +3,8 @@ import interactions
 import aiocron
 import os
 
+from utils import log
+from scrape import scrapeRankScreenshot
 from datetime import datetime
 from os import environ
 from dotenv import load_dotenv
@@ -227,6 +229,32 @@ async def clearHelper():
     qmStartTime = 0
     saveState()
 
+###################################
+#            RankCheck            #
+###################################
+@bot.command(
+    name='rankcheck',
+    description="Check a players ranks using their Epic Username!",
+    options=[
+        {
+            "name": "username",
+            "description": "Epic Games Username",
+            "type": 3,
+            "required": True
+        }
+    ]
+)
+async def rankcheck(ctx: interactions.CommandContext, username):
+    log(f"rankcheck({username})")
+    SCREENSHOT_PATH = "/home/cole/repos/CowBot/screenshots/rank.png"
+    await ctx.defer()
+    response = await scrapeRankScreenshot(username)
+    if response == "success":
+        picture = interactions.api.models.misc.File(SCREENSHOT_PATH)
+        await ctx.send(f"{username}'s Ranks", files=[picture])
+    else:
+        await ctx.send(response)
+
 
 
 
@@ -293,9 +321,6 @@ async def idToMember(id):
         object_id=id,
         parent_id=guildID
     )
-
-def log(msg):
-    print(f"{datetime.now()} | {msg}", flush=True)
     
 
 bot.start()

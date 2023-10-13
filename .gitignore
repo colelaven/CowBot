@@ -1,5 +1,7 @@
-env/
+venv/
 .env
+screenshots/
 *.pkl
 .DS_Store
-log.txt
+cowbot.log
+__pycache__/
