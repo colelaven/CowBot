@@ -60,7 +60,7 @@ async def scrapeRankScreenshot(username):
         cropped.save(SCREENSHOT_PATH)
         return "success"
     except:
-        log("Error scraping/cropping")
-        return "Error fetching rank"
+        log(f"Error scraping/cropping for {username}")
+        return f"Error fetching rank for {username}, did you input an Epic Games username?"
     finally:
         driver.quit()

@@ -237,21 +237,21 @@ async def clearHelper():
     description="Check a players ranks using their Epic Username!",
     options=[
         {
-            "name": "username",
+            "name": "epic_username",
             "description": "Epic Games Username",
             "type": 3,
             "required": True
         }
     ]
 )
-async def rankcheck(ctx: interactions.CommandContext, username):
-    log(f"rankcheck({username})")
+async def rankcheck(ctx: interactions.CommandContext, epic_username):
+    log(f"rankcheck({epic_username})")
     SCREENSHOT_PATH = "/home/cole/repos/CowBot/screenshots/rank.png"
     await ctx.defer()
-    response = await scrapeRankScreenshot(username)
+    response = await scrapeRankScreenshot(epic_username)
     if response == "success":
         picture = interactions.api.models.misc.File(SCREENSHOT_PATH)
-        await ctx.send(f"{username}'s Ranks", files=[picture])
+        await ctx.send(f"{epic_username}'s Ranks", files=[picture])
     else:
         await ctx.send(response)
 
