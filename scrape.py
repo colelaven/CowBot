@@ -4,8 +4,10 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-import urllib.parse
+import urllib
+import time
 from PIL import Image
 
 # async def scrapeRank(username):
@@ -34,6 +36,34 @@ from PIL import Image
 #     finally:
 #         driver.quit()
 
+# def scrapeRank(username):
+#     URL = F"https://rlstats.net/profile/Epic/{urllib.parse.quote(username)}"
+#     DRIVER_PATH = "/usr/lib/chromium-browser/chromedriver"
+    
+#     options = Options()
+#     options.add_argument("--headless=new")
+    
+#     service = Service(executable_path=DRIVER_PATH)
+#     driver = webdriver.Chrome(service=service, options=options)
+#     driver.get(URL)
+#     print("got page")
+#     try:
+#         time.sleep(5)
+#         print("done sleeping")
+#         WebDriverWait(driver, 20).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[title='Widget containing a Cloudflare security challenge']")))
+#         WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "label.ctp-checkbox-label"))).click()
+#         print("got past cloudflare")
+#         time.sleep(5)
+#         webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+#         webdriver.ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+#         element = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, "block-skills")))
+#         print("page loaded")
+#         return "success"
+#     except Exception as e:
+#         log(f"Error scraping/cropping for {username}: {type(e)}\n{e}")
+#         return f"Error fetching rank for {username}, did you input an Epic Games username?"
+#     finally:
+#         driver.quit()
 
 async def scrapeRankScreenshot(username):
     URL = F"https://rocketleague.tracker.network/rocket-league/profile/epic/{urllib.parse.quote(username)}/overview"
@@ -54,13 +84,24 @@ async def scrapeRankScreenshot(username):
         
         driver.execute_script("window.scrollTo(0, 1410)")
         driver.save_screenshot(SCREENSHOT_PATH)
-        
+
+        elements = driver.find_elements(By.CLASS_NAME, 'playlist')
+        playlists = [element.text for element in elements]
+        print(playlists)
+
         fullScreenshot = Image.open(SCREENSHOT_PATH)
-        cropped = fullScreenshot.crop((0,182,860,423))
+        if playlists[0] == "Un-Ranked":
+            cropped = fullScreenshot.crop((0,269,860,423))
+        else:
+            cropped = fullScreenshot.crop((0,219,860,368))
+        
         cropped.save(SCREENSHOT_PATH)
+
         return "success"
     except:
         log(f"Error scraping/cropping for {username}")
         return f"Error fetching rank for {username}, did you input an Epic Games username?"
     finally:
         driver.quit()
+
+# scrapeRankScreenshot("Claven.")
