@@ -91,9 +91,9 @@ async def scrapeRankScreenshot(username):
 
         fullScreenshot = Image.open(SCREENSHOT_PATH)
         if playlists[0] == "Un-Ranked":
-            cropped = fullScreenshot.crop((0,269,860,423))
+            cropped = fullScreenshot.crop((0,266,860,418))
         else:
-            cropped = fullScreenshot.crop((0,219,860,368))
+            cropped = fullScreenshot.crop((0,216,860,367))
         
         cropped.save(SCREENSHOT_PATH)
 
@@ -104,4 +104,4 @@ async def scrapeRankScreenshot(username):
     finally:
         driver.quit()
 
-# scrapeRankScreenshot("Claven.")
+# scrapeRankScreenshot("claven.")

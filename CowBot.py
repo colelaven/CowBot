@@ -59,19 +59,40 @@ async def on_ready():
             await clearHelper()
     else:
         await clearHelper()
-    
-    
+
 
 ###################################
-#              QUEUE              #
+#             Help                #
+###################################
+@bot.command(
+    name='help',
+    description="List Available Commands"
+)
+async def help(ctx: interactions.CommandContext):
+    member = ctx.author
+    log(f"Help({member})")
+    await ctx.send(
+        """**__CowBot Commands__**
+        **/rankcheck <epic_username>** - Check a players ranks using their Epic Username
+        **/request** - Request the Question Master Role
+        **/leave** - Remove Yourself from the Question Master Queue
+        **/forfeit** - Forfeit the remainder of your Question Master reign
+        **/status** - View the status of the Question Master and Queue
+        **/cycle** (Admin only) - Manually cycle the Question Master
+        **/clear** (Admin only) - Manually clear all Question Master related data"""
+    )
+
+
+###################################
+#            Request              #
 ###################################
 @bot.command(
     name='request',
     description="Request the Question Master Role"
 )
-async def queue(ctx: interactions.CommandContext):
+async def request(ctx: interactions.CommandContext):
     member = ctx.author
-    log(f"Queue({member})")
+    log(f"Request({member})")
 
     # Handle duplicate queues
     if qotdQueue.count(member):
