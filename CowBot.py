@@ -66,8 +66,8 @@ async def on_ready():
 #              QUEUE              #
 ###################################
 @bot.command(
-    name='queue',
-    description="Add yourself to the Question Master Queue"
+    name='request',
+    description="Request the Question Master Role"
 )
 async def queue(ctx: interactions.CommandContext):
     member = ctx.author
@@ -88,7 +88,7 @@ async def queue(ctx: interactions.CommandContext):
         await ctx.send(f"Congrats {member.mention}, you are now the Question Master!")
     else:
         qotdQueue.append(member)
-        await ctx.send(f"You have joined the queue at position **{len(qotdQueue) - 1}**.\nI will ping you when your day comes.")
+        await ctx.send(f"You have joined the queue for question master at position **{len(qotdQueue) - 1}**.\nI will ping you when your day comes.")
     
     saveState()
 
@@ -98,7 +98,7 @@ async def queue(ctx: interactions.CommandContext):
 ###################################
 @bot.command(
     name='leave',
-    description="Remove yourself from the queue"
+    description="Remove Yourself from the Question Master Queue"
 )
 async def leave(ctx: interactions.CommandContext):
     member = ctx.author
@@ -146,7 +146,7 @@ async def status(ctx: interactions.CommandContext):
 
 async def statusHelper(receiver):
     if qotdQueue:
-        msg = f"The current Question Master is **{qotdQueue[0]}**.\n"
+        msg = f"The current Question Master is **{qotdQueue[0].name}**.\n"
         if qotdQueue[1:]:
                 msg += f"Queued Members: {[user.name for user in qotdQueue[1:]]}"
         else:
