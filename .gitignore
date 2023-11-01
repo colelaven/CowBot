@@ -3,5 +3,6 @@ venv/
 screenshots/
 *.pkl
 .DS_Store
-cowbot.log
+*.log
+*.err
 __pycache__/

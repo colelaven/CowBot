@@ -3,9 +3,10 @@ Description=CowBot
 After=multi-user.target
 
 [Service]
-ExecStart=/home/cole/repos/CowBot/venv/bin/python3 /home/cole/repos/CowBot/CowBot.py > cowbot.log
+ExecStart=/home/cole/repos/CowBot/venv/bin/python -u /home/cole/repos/CowBot/CowBot.py
 Restart=always
-User=cole
+StandardOutput=append:/home/cole/repos/CowBot/cowbot.log
+StandardError=append:/home/cole/repos/CowBot/cowbot.err
 
 [Install]
 WantedBy=multi-user.target
