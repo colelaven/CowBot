@@ -1,0 +1,11 @@
+[Unit]
+Description=CowBot
+After=multi-user.target
+
+[Service]
+ExecStart=/home/cole/repos/CowBot/venv/bin/python3 /home/cole/repos/CowBot/CowBot.py > cowbot.log
+Restart=always
+User=cole
+
+[Install]
+WantedBy=multi-user.target
