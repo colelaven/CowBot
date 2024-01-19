@@ -194,6 +194,7 @@ async def manualCycle(ctx: interactions.CommandContext):
         await ctx.send("Congrats, you did nothing! There was no Question Master to begin with, dummy.")
 
 async def cycleHelper(receiver):
+    returnValue = -1
     if qotdQueue:
         oldQM = qotdQueue.pop(0)
         await removeQM(oldQM)
@@ -207,11 +208,9 @@ async def cycleHelper(receiver):
             await receiver.send(f"Question Master has been cycled: **{oldQM.name}** has been dethroned.\nCongrats {newQM.mention}, you are now the Question Master!")
         else:
             await receiver.send(f"Question Master has been cycled: **{oldQM.name}** has been dethroned.\nThere is no new Question Master.")
-        
-        saveState()
-        return 0
-    else:
-        return -1
+        returnValue = 0
+    saveState()
+    return returnValue
 
 # Trigger Cycle every day at Midnight
 @aiocron.crontab('0 0 * * *')
