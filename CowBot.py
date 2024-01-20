@@ -46,18 +46,19 @@ async def on_ready():
     global qmStartTime
     qmStartTime = 0
     qotdQueue = []
-    if os.path.exists('state.pkl'):
+    if os.path.exists('/home/cole/repos/CowBot/state.pkl'):
         try:
+            log(f"State file found, loading state")
+            await removeAllQMRoles()
             qotdQueue, qmStartTime = await loadState()
-            log(f"Restart Detected")
             log(f"Loaded state: Queue: {qotdQueue} | qmStartTime: {qmStartTime}")
-            await removeALlQMRoles()
             if qotdQueue:
                 await giveQM(qotdQueue[0])
         except Exception as e:
             log("Error loading state: " + repr(e))
             await clearHelper()
     else:
+        log(f"No state file found, starting clean")
         await clearHelper()
 
 
@@ -191,11 +192,13 @@ async def manualCycle(ctx: interactions.CommandContext):
     log(f"Cycle({ctx.author})")
     status = await cycleHelper(ctx)
     if status == -1:
+        log(f"Cycle had no effect")
         await ctx.send("Congrats, you did nothing! There was no Question Master to begin with, dummy.")
 
 async def cycleHelper(receiver):
     returnValue = -1
     if qotdQueue:
+        log(f"CycleHelper: there are people in the queue")
         oldQM = qotdQueue.pop(0)
         await removeQM(oldQM)
         global qmStartTime
@@ -242,7 +245,7 @@ async def clear(ctx: interactions.CommandContext):
     await ctx.send("Clear was successful")
 
 async def clearHelper():
-    await removeALlQMRoles()
+    await removeAllQMRoles()
     global qotdQueue
     global qmStartTime
     qotdQueue = []
@@ -283,7 +286,7 @@ async def rankcheck(ctx: interactions.CommandContext, epic_username):
 ###################################
 
 # Clears the QM role from everyone in the server
-async def removeALlQMRoles():
+async def removeAllQMRoles():
     guild = await interactions.get(
         bot,
         interactions.Guild,
@@ -313,11 +316,11 @@ def saveState():
         'qmStartTime' : qmStartTime
     }
     log('saving state, state: ' + str(state))
-    with open('state.pkl', 'wb') as f:
+    with open('/home/cole/repos/CowBot/state.pkl', 'wb') as f:
         pickle.dump(state, f)
 
 async def loadState():
-    with open('state.pkl', 'rb') as f:
+    with open('/home/cole/repos/CowBot/state.pkl', 'rb') as f:
         try:
             state = pickle.load(f)
         except Exception as e:
